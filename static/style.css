@@ -1,0 +1,447 @@
+/* OAT Polar Alignment - Mobile-first responsive design */
+
+:root {
+    --bg-dark: #1a1a2e;
+    --bg-panel: #16213e;
+    --bg-input: #0f3460;
+    --text-primary: #eaeaea;
+    --text-secondary: #a0a0a0;
+    --accent: #e94560;
+    --accent-green: #4ecca3;
+    --accent-yellow: #ffc107;
+    --accent-blue: #0077b6;
+    --border-color: #2a2a4a;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    line-height: 1.5;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 10px;
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 15px;
+}
+
+header h1 {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #666;
+}
+
+.status-dot.connected {
+    background: var(--accent-green);
+    box-shadow: 0 0 8px var(--accent-green);
+}
+
+.status-dot.disconnected {
+    background: var(--accent);
+}
+
+/* Panels */
+.panel {
+    background: var(--bg-panel);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.panel h2 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+/* Position Display */
+.position-display {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 10px;
+}
+
+.coord {
+    text-align: center;
+}
+
+.coord label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.coord span {
+    font-size: 1.4rem;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+}
+
+.tracking-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.85rem;
+}
+
+.indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.indicator.on {
+    background: var(--accent-green);
+}
+
+.indicator.off {
+    background: #666;
+}
+
+/* PA Error Display */
+.pa-display {
+    text-align: center;
+}
+
+.pa-error {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 15px;
+}
+
+.error-value {
+    text-align: center;
+}
+
+.error-value label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
+.error-value span {
+    font-size: 1.5rem;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+}
+
+.error-value.total span {
+    color: var(--accent-yellow);
+}
+
+.error-value small {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+}
+
+.pa-progress {
+    margin-top: 10px;
+}
+
+.progress-bar {
+    height: 8px;
+    background: var(--bg-input);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-yellow), var(--accent-green));
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+#pa-status {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* Buttons */
+.btn {
+    background: var(--bg-input);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    touch-action: manipulation;
+}
+
+.btn:hover {
+    background: var(--border-color);
+}
+
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.btn-primary:hover {
+    background: #d13a52;
+}
+
+.btn-large {
+    padding: 15px 30px;
+    font-size: 1.1rem;
+    width: 100%;
+}
+
+.btn.running {
+    background: var(--accent-green);
+    border-color: var(--accent-green);
+}
+
+/* Align Panel */
+.align-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.accuracy-setting {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.85rem;
+}
+
+.accuracy-setting input {
+    width: 60px;
+}
+
+.status-log {
+    max-height: 100px;
+    overflow-y: auto;
+    font-size: 0.8rem;
+    font-family: monospace;
+    background: var(--bg-dark);
+    padding: 8px;
+    border-radius: 6px;
+    margin-top: 10px;
+}
+
+.status-log p {
+    margin: 2px 0;
+}
+
+.status-log .info { color: var(--text-secondary); }
+.status-log .warning { color: var(--accent-yellow); }
+.status-log .error { color: var(--accent); }
+.status-log .success { color: var(--accent-green); }
+
+/* D-Pad Jog Controls */
+.jog-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.dpad {
+    display: grid;
+    grid-template-columns: repeat(3, 50px);
+    grid-template-rows: repeat(3, 50px);
+    gap: 5px;
+}
+
+.dpad-btn {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.dpad-btn:active {
+    background: var(--accent-blue);
+}
+
+.dpad-btn.north { grid-column: 2; grid-row: 1; }
+.dpad-btn.west { grid-column: 1; grid-row: 2; }
+.dpad-btn.stop { grid-column: 2; grid-row: 2; background: var(--accent); }
+.dpad-btn.east { grid-column: 3; grid-row: 2; }
+.dpad-btn.south { grid-column: 2; grid-row: 3; }
+
+.speed-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* AZ/ALT Controls */
+.azalt-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.azalt-group {
+    text-align: center;
+}
+
+.azalt-group label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.azalt-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.azalt-buttons input {
+    width: 60px;
+    text-align: center;
+}
+
+.azalt-controls > small {
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+/* Capture Panel */
+.capture-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.capture-settings {
+    display: flex;
+    justify-content: space-around;
+}
+
+.setting {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+}
+
+.setting input {
+    width: 60px;
+}
+
+.capture-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.solve-result {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    padding: 8px;
+    background: var(--bg-dark);
+    border-radius: 6px;
+    display: none;
+}
+
+.solve-result.visible {
+    display: block;
+}
+
+/* Connect Panel */
+.connect-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.connect-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* Form Elements */
+input, select {
+    background: var(--bg-input);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 15px;
+    color: var(--text-secondary);
+}
+
+/* Responsive adjustments */
+@media (min-width: 480px) {
+    .container {
+        padding: 15px;
+    }
+
+    .dpad {
+        grid-template-columns: repeat(3, 60px);
+        grid-template-rows: repeat(3, 60px);
+    }
+}
+
+/* Utility classes */
+.hidden {
+    display: none !important;
+}

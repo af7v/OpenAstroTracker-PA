@@ -1,0 +1,74 @@
+#!/bin/bash
+set -e
+
+OAT_DIR="/opt/oat-web-pa"
+OAT_USER="oat-pa"
+
+case "$1" in
+    configure)
+        # Create system user if it doesn't exist
+        if ! id -u "$OAT_USER" >/dev/null 2>&1; then
+            useradd --system --no-create-home --shell /usr/sbin/nologin "$OAT_USER"
+        fi
+
+        # Add user to dialout group for serial access
+        usermod -a -G dialout "$OAT_USER" || true
+        usermod -a -G video "$OAT_USER" || true
+
+        # Create virtual environment if it doesn't exist
+        if [ ! -d "$OAT_DIR/venv" ]; then
+            echo "Creating Python virtual environment..."
+            python3 -m venv "$OAT_DIR/venv"
+        fi
+
+        # Install/upgrade pip dependencies
+        echo "Installing Python dependencies..."
+        "$OAT_DIR/venv/bin/pip" install --upgrade pip
+        "$OAT_DIR/venv/bin/pip" install -r "$OAT_DIR/requirements.txt"
+
+        # Create capture directory
+        mkdir -p /tmp/oat-pa-captures
+        chown "$OAT_USER:$OAT_USER" /tmp/oat-pa-captures
+
+        # Set ownership
+        chown -R "$OAT_USER:$OAT_USER" "$OAT_DIR"
+
+        # Create config directory for user overrides
+        mkdir -p /etc/oat-web-pa
+        if [ ! -f /etc/oat-web-pa/config.py ]; then
+            echo "# Local configuration overrides for OAT Web PA" > /etc/oat-web-pa/config.py
+            echo "# Uncomment and modify settings as needed" >> /etc/oat-web-pa/config.py
+            echo "" >> /etc/oat-web-pa/config.py
+            echo "# LATITUDE = 40.0" >> /etc/oat-web-pa/config.py
+            echo "# LONGITUDE = -111.0" >> /etc/oat-web-pa/config.py
+            echo "# TARGET_ACCURACY = 60" >> /etc/oat-web-pa/config.py
+        fi
+
+        # Reload systemd
+        systemctl daemon-reload
+
+        echo ""
+        echo "============================================"
+        echo "OAT Web PA installed successfully!"
+        echo ""
+        echo "To start the service:"
+        echo "  sudo systemctl start oat-web-pa"
+        echo ""
+        echo "To enable on boot:"
+        echo "  sudo systemctl enable oat-web-pa"
+        echo ""
+        echo "Configuration: /etc/oat-web-pa/config.py"
+        echo "Web interface: http://localhost:5000"
+        echo "============================================"
+        ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+        ;;
+
+    *)
+        echo "postinst called with unknown argument '$1'" >&2
+        exit 1
+        ;;
+esac
+
+exit 0

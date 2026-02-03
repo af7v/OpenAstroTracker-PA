@@ -1,0 +1,36 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_install:
+	# Create directories
+	install -d $(CURDIR)/debian/oat-web-pa/opt/oat-web-pa
+	install -d $(CURDIR)/debian/oat-web-pa/opt/oat-web-pa/static
+	install -d $(CURDIR)/debian/oat-web-pa/opt/oat-web-pa/templates
+	install -d $(CURDIR)/debian/oat-web-pa/etc/systemd/system
+
+	# Install Python files
+	install -m 644 app.py $(CURDIR)/debian/oat-web-pa/opt/oat-web-pa/
+	install -m 644 config.py $(CURDIR)/debian/oat-web-pa/opt/oat-web-pa/
+	install -m 644 mount_client.py $(CURDIR)/debian/oat-web-pa/opt/oat-web-pa/
+	install -m 644 camera_client.py $(CURDIR)/debian/oat-web-pa/opt/oat-web-pa/
+	install -m 644 plate_solver.py $(CURDIR)/debian/oat-web-pa/opt/oat-web-pa/
+	install -m 644 pa_calculator.py $(CURDIR)/debian/oat-web-pa/opt/oat-web-pa/
+	install -m 644 requirements.txt $(CURDIR)/debian/oat-web-pa/opt/oat-web-pa/
+
+	# Install static files
+	install -m 644 static/style.css $(CURDIR)/debian/oat-web-pa/opt/oat-web-pa/static/
+	install -m 644 static/app.js $(CURDIR)/debian/oat-web-pa/opt/oat-web-pa/static/
+
+	# Install templates
+	install -m 644 templates/index.html $(CURDIR)/debian/oat-web-pa/opt/oat-web-pa/templates/
+
+	# Install systemd service
+	install -m 644 oat-web-pa.service $(CURDIR)/debian/oat-web-pa/etc/systemd/system/
+
+override_dh_auto_build:
+	# Nothing to build
+
+override_dh_auto_test:
+	# Skip tests

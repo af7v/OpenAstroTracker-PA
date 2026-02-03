@@ -1,0 +1,32 @@
+Source: oat-web-pa
+Section: science
+Priority: optional
+Maintainer: TAS Hellequin <theaffablesatanist@proton.me>
+Build-Depends: debhelper (>= 11)
+Standards-Version: 4.1.3
+Homepage: https://github.com/af7v/OpenAstroTracker-PA
+
+Package: oat-web-pa
+Architecture: all
+Depends: python3 (>= 3.8),
+         python3-pip,
+         python3-venv,
+         python3-opencv,
+         python3-pil,
+         python3-numpy,
+         ${misc:Depends}
+Recommends: astap,
+            python3-indi
+Suggests: astrometry.net
+Description: Web-based polar alignment for OpenAstroTracker
+ A lightweight web interface for performing polar alignment on
+ OpenAstroTracker mounts. Control your mount, capture images,
+ plate solve, and achieve precise polar alignment from your
+ phone or tablet.
+ .
+ Features:
+  - Fully standalone - no Ekos/KStars required
+  - Auto-align mode with one-click operation
+  - Manual RA/DEC and AZ/ALT jog controls
+  - Mobile-friendly responsive design
+  - ASTAP and astrometry.net solver support

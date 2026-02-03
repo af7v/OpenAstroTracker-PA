@@ -1,0 +1,26 @@
+#!/bin/bash
+set -e
+
+case "$1" in
+    purge)
+        # Remove virtual environment and config
+        rm -rf /opt/oat-web-pa/venv
+        rm -rf /etc/oat-web-pa
+        rm -rf /tmp/oat-pa-captures
+
+        # Remove user
+        if id -u "oat-pa" >/dev/null 2>&1; then
+            userdel oat-pa || true
+        fi
+        ;;
+
+    remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+        ;;
+
+    *)
+        echo "postrm called with unknown argument '$1'" >&2
+        exit 1
+        ;;
+esac
+
+exit 0

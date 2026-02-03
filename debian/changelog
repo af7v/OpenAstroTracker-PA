@@ -1,0 +1,12 @@
+oat-web-pa (1.0.0-1) stable; urgency=medium
+
+  * Initial release
+  * Web-based polar alignment interface
+  * Auto-align mode with iterative correction
+  * RA/DEC jog controls with speed selection
+  * AZ/ALT jog controls for polar adjustment
+  * ASTAP and astrometry.net solver support
+  * V4L2 and Pi Camera support
+  * Mobile-friendly responsive design
+
+ -- TAS Hellequin <theaffablesatanist@proton.me>  Mon, 03 Feb 2026 12:00:00 +0000

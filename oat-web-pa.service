@@ -1,0 +1,23 @@
+[Unit]
+Description=OpenAstroTracker Web Polar Alignment
+After=network.target
+
+[Service]
+Type=simple
+User=oat-pa
+Group=oat-pa
+WorkingDirectory=/opt/oat-web-pa
+Environment="PATH=/opt/oat-web-pa/venv/bin:/usr/bin"
+ExecStart=/opt/oat-web-pa/venv/bin/python app.py
+Restart=on-failure
+RestartSec=5
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/tmp/oat-pa-captures
+PrivateTmp=false
+
+[Install]
+WantedBy=multi-user.target

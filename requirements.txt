@@ -1,0 +1,20 @@
+# OAT Web Polar Alignment Dependencies
+
+# Web Framework
+flask>=2.0
+flask-socketio>=5.0
+eventlet>=0.33  # For WebSocket support
+
+# Astronomy
+astropy>=5.0
+
+# Image Processing
+Pillow>=9.0
+opencv-python-headless>=4.0  # For V4L2 camera support
+numpy>=1.20
+
+# INDI (install via apt on Pi: sudo apt install python3-indi)
+# pyindi-client  # Uncomment if installing via pip
+
+# Utilities
+watchdog>=2.0

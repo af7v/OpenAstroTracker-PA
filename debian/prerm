@@ -1,0 +1,28 @@
+#!/bin/bash
+set -e
+
+case "$1" in
+    remove|upgrade|deconfigure)
+        # Stop the service if running
+        if systemctl is-active --quiet oat-web-pa; then
+            echo "Stopping oat-web-pa service..."
+            systemctl stop oat-web-pa
+        fi
+
+        # Disable the service
+        if systemctl is-enabled --quiet oat-web-pa 2>/dev/null; then
+            echo "Disabling oat-web-pa service..."
+            systemctl disable oat-web-pa
+        fi
+        ;;
+
+    failed-upgrade)
+        ;;
+
+    *)
+        echo "prerm called with unknown argument '$1'" >&2
+        exit 1
+        ;;
+esac
+
+exit 0
