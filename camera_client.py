@@ -1,12 +1,18 @@
 """
 *****
-Purpose: Camera client supporting V4L2 (USB/Pi cameras) and INDI cameras
+Purpose: Cross-platform camera client supporting OpenCV, V4L2, Pi Camera, and INDI
 
 Parameters:
 None - Configuration loaded from config.py
 
 Returns:
 CameraClient class for image capture
+
+Supported backends:
+- opencv: Cross-platform (Windows/macOS/Linux) via cv2.VideoCapture
+- v4l2: Linux V4L2 devices (alias for opencv)
+- picamera: Raspberry Pi camera module
+- indi: INDI camera devices (Linux/macOS)
 *****
 """
 
@@ -22,7 +28,7 @@ try:
     CV2_AVAILABLE = True
 except ImportError:
     CV2_AVAILABLE = False
-    logging.warning("OpenCV not available - V4L2 camera support disabled")
+    logging.warning("OpenCV not available - opencv/v4l2 camera support disabled")
 
 try:
     from PIL import Image
@@ -76,8 +82,8 @@ class CameraClient:
         Purpose: Connect to camera
 
         Parameters:
-        str camera_type: Optional override - 'v4l2', 'picamera', or 'indi'
-        str device: Optional device path override
+        str camera_type: Optional override - 'opencv', 'v4l2', 'picamera', or 'indi'
+        str device: Optional device path or index override
 
         Returns:
         bool: True if connection successful
@@ -92,8 +98,9 @@ class CameraClient:
         if device:
             self.device = device
 
-        if self.camera_type == 'v4l2':
-            return self._connect_v4l2()
+        # opencv and v4l2 both use cv2.VideoCapture (cross-platform)
+        if self.camera_type in ('opencv', 'v4l2'):
+            return self._connect_opencv()
         elif self.camera_type == 'picamera':
             return self._connect_picamera()
         elif self.camera_type == 'indi':
@@ -102,14 +109,14 @@ class CameraClient:
             logger.error(f"Unknown camera type: {self.camera_type}")
             return False
 
-    def _connect_v4l2(self) -> bool:
-        """Connect to V4L2 camera (USB webcam)."""
+    def _connect_opencv(self) -> bool:
+        """Connect via OpenCV (cross-platform: Windows/macOS/Linux)."""
         if not CV2_AVAILABLE:
-            logger.error("OpenCV not available for V4L2")
+            logger.error("OpenCV not available")
             return False
 
         try:
-            # Parse device - could be /dev/video0 or just 0
+            # Parse device - could be /dev/video0 (Linux) or just index (0, 1, 2...)
             if isinstance(self.device, str) and self.device.startswith('/dev/video'):
                 device_id = int(self.device.replace('/dev/video', ''))
             else:
@@ -126,11 +133,11 @@ class CameraClient:
             self._camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
             self._connected = True
-            logger.info(f"Connected to V4L2 camera: {self.device}")
+            logger.info(f"Connected to camera via OpenCV: device {self.device}")
             return True
 
         except Exception as e:
-            logger.error(f"V4L2 connection error: {e}")
+            logger.error(f"OpenCV connection error: {e}")
             return False
 
     def _connect_picamera(self) -> bool:
@@ -173,7 +180,7 @@ class CameraClient:
         *****
         """
         if self._camera:
-            if self.camera_type == 'v4l2' and CV2_AVAILABLE:
+            if self.camera_type in ('opencv', 'v4l2') and CV2_AVAILABLE:
                 self._camera.release()
             elif self.camera_type == 'picamera' and PICAMERA_AVAILABLE:
                 self._camera.stop()
@@ -215,8 +222,8 @@ class CameraClient:
         filepath = self.capture_dir / filename
 
         try:
-            if self.camera_type == 'v4l2':
-                return self._capture_v4l2(filepath, exposure, gain)
+            if self.camera_type in ('opencv', 'v4l2'):
+                return self._capture_opencv(filepath, exposure, gain)
             elif self.camera_type == 'picamera':
                 return self._capture_picamera(filepath, exposure, gain)
             elif self.camera_type == 'indi':
@@ -226,8 +233,8 @@ class CameraClient:
             logger.error(f"Capture error: {e}")
             return None
 
-    def _capture_v4l2(self, filepath: Path, exposure: float, gain: int) -> Optional[str]:
-        """Capture frame from V4L2 camera."""
+    def _capture_opencv(self, filepath: Path, exposure: float, gain: int) -> Optional[str]:
+        """Capture frame via OpenCV (cross-platform)."""
         # Set exposure if possible (may not work on all cameras)
         self._camera.set(cv2.CAP_PROP_EXPOSURE, exposure * 1000)  # ms
         self._camera.set(cv2.CAP_PROP_GAIN, gain)
@@ -286,7 +293,7 @@ class CameraClient:
             return None
 
         try:
-            if self.camera_type == 'v4l2':
+            if self.camera_type in ('opencv', 'v4l2'):
                 ret, frame = self._camera.read()
                 if not ret or frame is None:
                     return None
@@ -321,20 +328,26 @@ class CameraClient:
         None
 
         Returns:
-        list: List of available device paths
+        list: List of available device identifiers (indices or paths)
         *****
         """
+        import sys
         devices = []
 
-        # Check V4L2 devices
+        # Check OpenCV devices (cross-platform)
         if CV2_AVAILABLE:
             for i in range(10):
                 cap = cv2.VideoCapture(i)
                 if cap.isOpened():
-                    devices.append(f"/dev/video{i}")
+                    # Use platform-appropriate identifier
+                    if sys.platform.startswith('linux'):
+                        devices.append(f"/dev/video{i}")
+                    else:
+                        # Windows/macOS use device index
+                        devices.append(str(i))
                     cap.release()
 
-        # Check Pi Camera
+        # Check Pi Camera (Linux only)
         if PICAMERA_AVAILABLE:
             try:
                 cam = Picamera2()

@@ -16,8 +16,10 @@ INDI_PORT = 7624
 TELESCOPE_NAME = "LX200 GPS"  # INDI driver name for OAT
 
 # Camera Settings
-CAMERA_TYPE = "v4l2"  # Options: "v4l2", "indi", "picamera"
-CAMERA_DEVICE = "/dev/video0"  # For V4L2
+# Options: "opencv" (cross-platform), "v4l2" (Linux), "picamera" (RPi), "indi"
+# "opencv" uses cv2.VideoCapture - works on Windows, macOS, and Linux
+CAMERA_TYPE = "opencv"
+CAMERA_DEVICE = "0"  # Device index (0, 1, 2...) or Linux path (/dev/video0)
 INDI_CAMERA_NAME = "CCD Simulator"  # For INDI camera
 
 # Plate Solver Settings
