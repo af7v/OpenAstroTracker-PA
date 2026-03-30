@@ -11,10 +11,8 @@ PlateSolver class for astronomical image solving
 """
 
 import math
-import os
 import subprocess
 import logging
-import re
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Optional
@@ -22,8 +20,6 @@ from typing import Optional
 try:
     from astropy.io import fits
     from astropy.wcs import WCS
-    from astropy.coordinates import SkyCoord
-    import astropy.units as u
     ASTROPY_AVAILABLE = True
 except ImportError:
     ASTROPY_AVAILABLE = False
@@ -213,9 +209,7 @@ class PlateSolver:
 
                     # Get rotation and scale
                     cd1_1 = header.get('CD1_1', 0)
-                    cd1_2 = header.get('CD1_2', 0)
                     cd2_1 = header.get('CD2_1', 0)
-                    cd2_2 = header.get('CD2_2', 0)
 
                     pixel_scale = math.sqrt(cd1_1**2 + cd2_1**2) * 3600  # arcsec/pixel
                     rotation = math.degrees(math.atan2(cd2_1, cd1_1))

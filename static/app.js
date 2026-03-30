@@ -445,7 +445,11 @@ async function saveSite() {
     if (!name) { setLocationStatus('Enter a site name first', 'error'); return; }
     if (isNaN(lat) || lat < -90 || lat > 90) { setLocationStatus('Invalid latitude (−90 to 90)', 'error'); return; }
     if (isNaN(lon) || lon < -180 || lon > 180) { setLocationStatus('Invalid longitude (−180 to 180)', 'error'); return; }
-    await apiCall('locations', 'POST', { name, latitude: lat, longitude: lon });
+    const result = await apiCall('locations', 'POST', { name, latitude: lat, longitude: lon });
+    if (result.error) {
+        setLocationStatus(`Save failed: ${result.error}`, 'error');
+        return;
+    }
     setLocationStatus(`Saved: ${name}`, 'success');
     loadLocations();
 }
@@ -453,10 +457,18 @@ async function saveSite() {
 async function deleteLocation() {
     const name = elements.locationSelect.value;
     if (!name) return;
-    await apiCall(`locations/${encodeURIComponent(name)}`, 'DELETE');
-    setLocationStatus(`Deleted: ${name}`, 'info');
-    elements.siteName.value = '';
-    loadLocations();
+    try {
+        const result = await apiCall(`locations/${encodeURIComponent(name)}`, 'DELETE');
+        if (result.error) {
+            setLocationStatus(`Delete failed: ${result.error}`, 'error');
+            return;
+        }
+        setLocationStatus(`Deleted: ${name}`, 'info');
+        elements.siteName.value = '';
+        loadLocations();
+    } catch (e) {
+        setLocationStatus(`Delete error: ${e.message}`, 'error');
+    }
 }
 
 async function applyLocation() {

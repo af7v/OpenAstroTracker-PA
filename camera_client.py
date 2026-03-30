@@ -16,7 +16,6 @@ Supported backends:
 *****
 """
 
-import os
 import time
 import logging
 from datetime import datetime
@@ -31,7 +30,7 @@ except ImportError:
     logging.warning("OpenCV not available - opencv/v4l2 camera support disabled")
 
 try:
-    from PIL import Image
+    import PIL  # noqa: F401
     PIL_AVAILABLE = True
 except ImportError:
     PIL_AVAILABLE = False

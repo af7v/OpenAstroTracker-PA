@@ -24,7 +24,7 @@ from camera_client import get_camera_client
 from plate_solver import get_plate_solver
 from pa_calculator import (
     calculate_pa_error, calculate_correction,
-    parse_ra_string, parse_dec_string, PAError
+    parse_ra_string, parse_dec_string
 )
 
 # Configure logging
@@ -67,7 +67,7 @@ def load_locations() -> dict:
             logger.warning(f"Could not load locations file: {e}")
     return {}
 
-def save_locations(locations: dict) -> None:
+def save_locations(locations: dict) -> bool:
     """
     *****
     Purpose: Save location presets to disk
@@ -76,15 +76,20 @@ def save_locations(locations: dict) -> None:
     dict locations: Mapping of site name to coordinate dict
 
     Returns:
-    None
+    bool: True if written successfully, False on any I/O error
+
+    Errors:
+    Returns False (and logs) if the file cannot be written
     *****
     """
     try:
         os.makedirs(os.path.dirname(LOCATIONS_FILE), exist_ok=True)
         with open(LOCATIONS_FILE, 'w') as f:
             json.dump(locations, f, indent=2)
+        return True
     except Exception as e:
         logger.error(f"Could not save locations file: {e}")
+        return False
 
 
 # ============================================================================
@@ -490,9 +495,16 @@ def api_locations_save():
     if not name or lat is None or lon is None:
         return jsonify({'error': 'name, latitude, and longitude required'}), 400
 
+    try:
+        lat_val = float(lat)
+        lon_val = float(lon)
+    except (ValueError, TypeError):
+        return jsonify({'error': 'latitude and longitude must be numbers'}), 400
+
     locations = load_locations()
-    locations[name] = {'latitude': float(lat), 'longitude': float(lon)}
-    save_locations(locations)
+    locations[name] = {'latitude': lat_val, 'longitude': lon_val}
+    if not save_locations(locations):
+        return jsonify({'error': 'Location updated in memory but could not be written to disk'}), 500
     return jsonify({'success': True})
 
 
@@ -502,7 +514,8 @@ def api_locations_delete(name):
     locations = load_locations()
     if name in locations:
         del locations[name]
-        save_locations(locations)
+        if not save_locations(locations):
+            return jsonify({'error': 'Location removed from memory but could not be written to disk'}), 500
     return jsonify({'success': True})
 
 
@@ -528,8 +541,14 @@ def api_location_apply():
     if lat is None or lon is None:
         return jsonify({'error': 'latitude and longitude required'}), 400
 
-    config.LATITUDE = float(lat)
-    config.LONGITUDE = float(lon)
+    try:
+        lat_val = float(lat)
+        lon_val = float(lon)
+    except (ValueError, TypeError):
+        return jsonify({'error': 'latitude and longitude must be numbers'}), 400
+
+    config.LATITUDE = lat_val
+    config.LONGITUDE = lon_val
     logger.info(f"Location applied: {config.LATITUDE:.4f}N, {config.LONGITUDE:.4f}E")
     return jsonify({'success': True, 'latitude': config.LATITUDE, 'longitude': config.LONGITUDE})
 

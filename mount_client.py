@@ -13,7 +13,6 @@ MountClient class for telescope control
 import time
 import logging
 import threading
-import re
 from typing import Optional, Tuple
 
 try:

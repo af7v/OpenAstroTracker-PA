@@ -89,7 +89,6 @@ def calculate_pa_error(
     solved_dec_rad = math.radians(solved_dec)
     mount_ra_rad = math.radians(mount_ra)
     mount_dec_rad = math.radians(mount_dec)
-    lat_rad = math.radians(latitude)
 
     # Calculate the difference in RA and DEC
     delta_ra = solved_ra_rad - mount_ra_rad
@@ -129,15 +128,6 @@ def calculate_pa_error(
     # Calculate altitude error component
     # DEC error maps to altitude
     alt_error = delta_dec_arcmin
-
-    # Apply latitude correction for more accuracy
-    # At the celestial pole, the relationship depends on latitude
-    sin_lat = math.sin(lat_rad)
-    cos_lat = math.cos(lat_rad)
-
-    # For observations near the meridian:
-    # az_error_corrected = az_error * sin_lat
-    # alt_error stays approximately the same
 
     # Total error (Pythagorean)
     total_error_arcmin = math.sqrt(az_error**2 + alt_error**2)
