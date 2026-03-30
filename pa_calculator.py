@@ -120,6 +120,7 @@ def calculate_pa_error(
     cos_dec = math.cos(mount_dec_rad)
     if cos_dec < 0.1:
         cos_dec = 0.1  # Prevent division issues near pole
+        logger.warning("Mount DEC is near the pole (cos_dec < 0.1); AZ error calculation is approximate")
 
     # Calculate azimuth error component
     # RA error maps to azimuth, scaled by declination
@@ -203,6 +204,10 @@ def parse_dec_string(dec_str: str) -> Optional[float]:
     try:
         # Remove any leading/trailing whitespace
         dec_str = dec_str.strip()
+
+        if not dec_str:
+            logger.error("Cannot parse DEC: empty string")
+            return None
 
         # Determine sign
         sign = 1

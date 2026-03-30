@@ -28,3 +28,6 @@ captures/
 
 # Config overrides
 config_local.py
+
+# Runtime logs
+logs/

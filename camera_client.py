@@ -148,8 +148,8 @@ class CameraClient:
 
         try:
             self._camera = Picamera2()
-            config = self._camera.create_still_configuration()
-            self._camera.configure(config)
+            still_config = self._camera.create_still_configuration()
+            self._camera.configure(still_config)
             self._camera.start()
             time.sleep(1)  # Allow camera to warm up
 
@@ -353,7 +353,7 @@ class CameraClient:
                 cam = Picamera2()
                 cam.close()
                 devices.append("picamera")
-            except:
+            except Exception:
                 pass
 
         return devices

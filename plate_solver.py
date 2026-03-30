@@ -10,6 +10,7 @@ PlateSolver class for astronomical image solving
 *****
 """
 
+import math
 import os
 import subprocess
 import logging
@@ -152,6 +153,12 @@ class PlateSolver:
 
         logger.info(f"Running ASTAP: {' '.join(cmd)}")
 
+        # Delete any stale .wcs file so a prior result cannot be mistaken for a fresh one
+        wcs_path = image_path.with_suffix('.wcs')
+        ini_path = image_path.with_suffix('.ini')
+        if wcs_path.exists():
+            wcs_path.unlink()
+
         try:
             result = subprocess.run(
                 cmd,
@@ -160,10 +167,11 @@ class PlateSolver:
                 timeout=self.timeout
             )
 
-            # Check for .wcs file (indicates success)
-            wcs_path = image_path.with_suffix('.wcs')
-            ini_path = image_path.with_suffix('.ini')
+            if result.returncode != 0:
+                logger.warning(f"ASTAP returned non-zero exit code {result.returncode}: {result.stderr}")
+                return None
 
+            # Check for .wcs file (indicates success)
             if wcs_path.exists():
                 return self._parse_astap_result(wcs_path, ini_path)
             else:
@@ -209,7 +217,6 @@ class PlateSolver:
                     cd2_1 = header.get('CD2_1', 0)
                     cd2_2 = header.get('CD2_2', 0)
 
-                    import math
                     pixel_scale = math.sqrt(cd1_1**2 + cd2_1**2) * 3600  # arcsec/pixel
                     rotation = math.degrees(math.atan2(cd2_1, cd1_1))
 
@@ -318,7 +325,6 @@ class PlateSolver:
                 cd1_1 = header.get('CD1_1', 0)
                 cd2_1 = header.get('CD2_1', 0)
 
-                import math
                 pixel_scale = math.sqrt(cd1_1**2 + cd2_1**2) * 3600
                 rotation = math.degrees(math.atan2(cd2_1, cd1_1))
 

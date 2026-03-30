@@ -6,7 +6,7 @@
     --bg-input: #0f3460;
     --text-primary: #eaeaea;
     --text-secondary: #a0a0a0;
-    --accent: #e94560;
+    --accent: #c08000;
     --accent-green: #4ecca3;
     --accent-yellow: #ffc107;
     --accent-blue: #0077b6;
@@ -60,6 +60,7 @@ header h1 {
     height: 10px;
     border-radius: 50%;
     background: #666;
+    transition: background-color 0.3s ease;
 }
 
 .status-dot.connected {
@@ -221,7 +222,7 @@ header h1 {
 }
 
 .btn-primary:hover {
-    background: #d13a52;
+    background: #a06800;
 }
 
 .btn-large {
@@ -285,8 +286,8 @@ header h1 {
 
 .dpad {
     display: grid;
-    grid-template-columns: repeat(3, 50px);
-    grid-template-rows: repeat(3, 50px);
+    grid-template-columns: repeat(3, 80px);
+    grid-template-rows: repeat(3, 80px);
     gap: 5px;
 }
 
@@ -310,6 +311,13 @@ header h1 {
 .dpad-btn.stop { grid-column: 2; grid-row: 2; background: var(--accent); }
 .dpad-btn.east { grid-column: 3; grid-row: 2; }
 .dpad-btn.south { grid-column: 2; grid-row: 3; }
+
+.dpad-btn.stop {
+    background: #8b0000;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border: 2px solid #ff4444;
+}
 
 .speed-selector {
     display: flex;
@@ -436,8 +444,8 @@ footer {
     }
 
     .dpad {
-        grid-template-columns: repeat(3, 60px);
-        grid-template-rows: repeat(3, 60px);
+        grid-template-columns: repeat(3, 88px);
+        grid-template-rows: repeat(3, 88px);
     }
 }
 
@@ -445,3 +453,27 @@ footer {
 .hidden {
     display: none !important;
 }
+
+/* Location Settings Panel */
+.settings-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.location-preset-buttons,
+.location-action-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.location-status {
+    font-size: 0.85rem;
+    min-height: 1.2em;
+    padding: 4px 0;
+}
+
+.location-status.success { color: var(--accent-green); }
+.location-status.error   { color: #ff6b6b; }
+.location-status.info    { color: var(--text-secondary); }

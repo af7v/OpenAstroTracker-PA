@@ -10,6 +10,9 @@ None
 *****
 """
 
+import os
+import importlib.util
+
 # INDI Server Settings
 INDI_HOST = "localhost"
 INDI_PORT = 7624
@@ -53,3 +56,16 @@ DEBUG = False
 
 # File Paths
 CAPTURE_DIR = "/tmp/oat-pa-captures"
+
+# Load local configuration overrides from /etc/oat-web-pa/config.py.
+# This file is created by the .deb postinst script and is the intended
+# location for site-specific settings (LATITUDE, LONGITUDE, etc.).
+_OVERRIDE_PATH = "/etc/oat-web-pa/config.py"
+if os.path.exists(_OVERRIDE_PATH):
+    _spec = importlib.util.spec_from_file_location("config_override", _OVERRIDE_PATH)
+    _override = importlib.util.module_from_spec(_spec)
+    _spec.loader.exec_module(_override)
+    for _key in dir(_override):
+        if _key.isupper():
+            globals()[_key] = getattr(_override, _key)
+    del _spec, _override, _key

@@ -46,7 +46,19 @@ const elements = {
     // Connection
     serialPort: document.getElementById('serial-port'),
     btnConnect: document.getElementById('btn-connect'),
-    btnDisconnect: document.getElementById('btn-disconnect')
+    btnDisconnect: document.getElementById('btn-disconnect'),
+
+    // Location settings
+    locationSelect: document.getElementById('location-select'),
+    siteName: document.getElementById('site-name'),
+    latitude: document.getElementById('latitude'),
+    longitude: document.getElementById('longitude'),
+    btnLoadLocation: document.getElementById('btn-load-location'),
+    btnDeleteLocation: document.getElementById('btn-delete-location'),
+    btnUseGps: document.getElementById('btn-use-gps'),
+    btnSaveSite: document.getElementById('btn-save-site'),
+    btnApplyLocation: document.getElementById('btn-apply-location'),
+    locationStatus: document.getElementById('location-status'),
 };
 
 // Initialize
@@ -55,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initEventListeners();
     pollStatus();
     statusPollInterval = setInterval(pollStatus, 2000);
+    loadLocations();
 });
 
 // WebSocket Setup
@@ -111,22 +124,49 @@ function initEventListeners() {
 
     // AZ/ALT Jog
     document.getElementById('btn-az-minus').addEventListener('click', () => {
-        moveAz(-parseFloat(elements.azStep.value));
+        const step = validateNumericInput(elements.azStep.value, 0.1, 60, 'AZ step');
+        if (step === null) return;
+        moveAz(-step);
     });
     document.getElementById('btn-az-plus').addEventListener('click', () => {
-        moveAz(parseFloat(elements.azStep.value));
+        const step = validateNumericInput(elements.azStep.value, 0.1, 60, 'AZ step');
+        if (step === null) return;
+        moveAz(step);
     });
     document.getElementById('btn-alt-minus').addEventListener('click', () => {
-        moveAlt(-parseFloat(elements.altStep.value));
+        const step = validateNumericInput(elements.altStep.value, 0.1, 60, 'ALT step');
+        if (step === null) return;
+        moveAlt(-step);
     });
     document.getElementById('btn-alt-plus').addEventListener('click', () => {
-        moveAlt(parseFloat(elements.altStep.value));
+        const step = validateNumericInput(elements.altStep.value, 0.1, 60, 'ALT step');
+        if (step === null) return;
+        moveAlt(step);
     });
 
     // Capture
     elements.btnCapture.addEventListener('click', capture);
     elements.btnSolve.addEventListener('click', solve);
     elements.btnCaptureSolve.addEventListener('click', captureAndSolve);
+
+    // Location settings
+    elements.btnLoadLocation.addEventListener('click', loadSelectedLocation);
+    elements.btnDeleteLocation.addEventListener('click', deleteLocation);
+    elements.btnUseGps.addEventListener('click', useGps);
+    elements.btnSaveSite.addEventListener('click', saveSite);
+    elements.btnApplyLocation.addEventListener('click', applyLocation);
+    elements.locationSelect.addEventListener('change', () => {
+        if (elements.locationSelect.value) loadSelectedLocation();
+    });
+}
+
+function validateNumericInput(value, min, max, fieldName) {
+    const num = parseFloat(value);
+    if (isNaN(num) || num < min || num > max) {
+        addStatusLog(`Invalid ${fieldName}: must be between ${min} and ${max}`, 'error');
+        return null;
+    }
+    return num;
 }
 
 // API Functions
@@ -150,10 +190,10 @@ async function connect() {
     try {
         const result = await apiCall('connect', 'POST', { serial_port: serialPort });
         if (result.error) {
-            alert(`Connection failed: ${result.error}`);
+            addStatusLog(`Connection failed: ${result.error}`, 'error');
         }
     } catch (e) {
-        alert(`Connection error: ${e.message}`);
+        addStatusLog(`Connection error: ${e.message}`, 'error');
     }
 
     elements.btnConnect.disabled = false;
@@ -213,6 +253,7 @@ function updateDisplay(status) {
         const maxError = 300;
         const progress = Math.max(0, 100 - (status.pa_error.total / maxError * 100));
         elements.paProgressFill.style.width = `${progress}%`;
+        elements.paProgressFill.setAttribute('aria-valuenow', Math.round(progress));
 
         if (status.pa_error.aligned) {
             elements.paStatus.textContent = 'Aligned!';
@@ -266,13 +307,18 @@ async function moveAlt(arcmin) {
 
 // Capture functions
 async function capture() {
+    const exposure = validateNumericInput(elements.exposure.value, 0.1, 60, 'exposure');
+    if (exposure === null) return;
+    const gain = validateNumericInput(elements.gain.value, 0, 1000, 'gain');
+    if (gain === null) return;
+
     elements.btnCapture.disabled = true;
     elements.btnCapture.textContent = 'Capturing...';
 
     try {
         const result = await apiCall('capture', 'POST', {
-            exposure: parseFloat(elements.exposure.value),
-            gain: parseInt(elements.gain.value)
+            exposure: exposure,
+            gain: Math.round(gain)
         });
 
         if (result.filepath) {
@@ -318,12 +364,16 @@ async function solve() {
 async function captureAndSolve() {
     elements.btnCaptureSolve.disabled = true;
     elements.btnCaptureSolve.textContent = 'Working...';
+    elements.btnCapture.disabled = true;
+    elements.btnSolve.disabled = true;
 
     await capture();
     await solve();
 
     elements.btnCaptureSolve.disabled = false;
     elements.btnCaptureSolve.textContent = 'Capture & Solve';
+    elements.btnCapture.disabled = false;
+    elements.btnSolve.disabled = false;
 }
 
 // Auto-align
@@ -332,7 +382,8 @@ async function toggleAutoAlign() {
         await apiCall('auto-align/stop', 'POST');
         addStatusLog('Auto-align stopped', 'info');
     } else {
-        const targetAccuracy = parseFloat(elements.targetAccuracy.value);
+        const targetAccuracy = validateNumericInput(elements.targetAccuracy.value, 1, 600, 'target accuracy');
+        if (targetAccuracy === null) return;
         await apiCall('auto-align/start', 'POST', { target_accuracy: targetAccuracy });
     }
     pollStatus();
@@ -350,4 +401,97 @@ function addStatusLog(message, level = 'info') {
     while (elements.alignStatus.children.length > 20) {
         elements.alignStatus.removeChild(elements.alignStatus.firstChild);
     }
+}
+
+// Location presets
+async function loadLocations() {
+    try {
+        const result = await apiCall('locations');
+        const select = elements.locationSelect;
+        const current = select.value;
+        while (select.options.length > 1) select.remove(1);
+        for (const name of Object.keys(result)) {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            select.appendChild(opt);
+        }
+        if (current) select.value = current;
+    } catch (e) {
+        console.error('Failed to load locations:', e);
+    }
+}
+
+async function loadSelectedLocation() {
+    const name = elements.locationSelect.value;
+    if (!name) return;
+    try {
+        const locations = await apiCall('locations');
+        if (locations[name]) {
+            elements.latitude.value = locations[name].latitude;
+            elements.longitude.value = locations[name].longitude;
+            elements.siteName.value = name;
+            setLocationStatus(`Loaded: ${name}`, 'success');
+        }
+    } catch (e) {
+        setLocationStatus('Failed to load site', 'error');
+    }
+}
+
+async function saveSite() {
+    const name = elements.siteName.value.trim();
+    const lat = parseFloat(elements.latitude.value);
+    const lon = parseFloat(elements.longitude.value);
+    if (!name) { setLocationStatus('Enter a site name first', 'error'); return; }
+    if (isNaN(lat) || lat < -90 || lat > 90) { setLocationStatus('Invalid latitude (−90 to 90)', 'error'); return; }
+    if (isNaN(lon) || lon < -180 || lon > 180) { setLocationStatus('Invalid longitude (−180 to 180)', 'error'); return; }
+    await apiCall('locations', 'POST', { name, latitude: lat, longitude: lon });
+    setLocationStatus(`Saved: ${name}`, 'success');
+    loadLocations();
+}
+
+async function deleteLocation() {
+    const name = elements.locationSelect.value;
+    if (!name) return;
+    await apiCall(`locations/${encodeURIComponent(name)}`, 'DELETE');
+    setLocationStatus(`Deleted: ${name}`, 'info');
+    elements.siteName.value = '';
+    loadLocations();
+}
+
+async function applyLocation() {
+    const lat = parseFloat(elements.latitude.value);
+    const lon = parseFloat(elements.longitude.value);
+    if (isNaN(lat) || lat < -90 || lat > 90) { setLocationStatus('Invalid latitude', 'error'); return; }
+    if (isNaN(lon) || lon < -180 || lon > 180) { setLocationStatus('Invalid longitude', 'error'); return; }
+    const result = await apiCall('location/apply', 'POST', { latitude: lat, longitude: lon });
+    if (result.success) {
+        setLocationStatus(`Applied: ${lat.toFixed(4)}°N, ${lon.toFixed(4)}°E`, 'success');
+    } else {
+        setLocationStatus(`Apply failed: ${result.error}`, 'error');
+    }
+}
+
+async function useGps() {
+    elements.btnUseGps.disabled = true;
+    elements.btnUseGps.textContent = 'Reading GPS...';
+    try {
+        const result = await apiCall('location/from-mount');
+        if (result.latitude !== undefined) {
+            elements.latitude.value = result.latitude.toFixed(4);
+            elements.longitude.value = result.longitude.toFixed(4);
+            setLocationStatus(`GPS: ${result.latitude.toFixed(4)}°N, ${result.longitude.toFixed(4)}°E`, 'success');
+        } else {
+            setLocationStatus(`GPS read failed: ${result.error}`, 'error');
+        }
+    } catch (e) {
+        setLocationStatus(`GPS error: ${e.message}`, 'error');
+    }
+    elements.btnUseGps.disabled = false;
+    elements.btnUseGps.textContent = 'Use Mount GPS';
+}
+
+function setLocationStatus(message, level = 'info') {
+    elements.locationStatus.textContent = message;
+    elements.locationStatus.className = `location-status ${level}`;
 }

@@ -20,6 +20,58 @@
 
         <!-- Main Content -->
         <main>
+            <!-- Connection Panel -->
+            <section class="panel connect-panel">
+                <h2>Connection</h2>
+                <div class="connect-controls">
+                    <div class="setting">
+                        <label>Serial Port:</label>
+                        <input type="text" id="serial-port" value="/dev/ttyACM0">
+                    </div>
+                    <div class="connect-buttons">
+                        <button id="btn-connect" class="btn btn-primary">Connect</button>
+                        <button id="btn-disconnect" class="btn">Disconnect</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Location Settings Panel -->
+            <section class="panel settings-panel">
+                <h2>Location Settings</h2>
+                <div class="settings-controls">
+                    <div class="setting">
+                        <label>Saved Sites:</label>
+                        <select id="location-select">
+                            <option value="">-- Select Site --</option>
+                        </select>
+                    </div>
+                    <div class="location-preset-buttons">
+                        <button id="btn-load-location" class="btn">Load</button>
+                        <button id="btn-delete-location" class="btn">Delete</button>
+                    </div>
+                    <div class="setting">
+                        <label>Site Name:</label>
+                        <input type="text" id="site-name" placeholder="e.g. Dark Sky Site A">
+                    </div>
+                    <div class="setting">
+                        <label>Latitude:</label>
+                        <input type="number" id="latitude" value="40.0" step="0.0001" min="-90" max="90">
+                        <span>°N</span>
+                    </div>
+                    <div class="setting">
+                        <label>Longitude:</label>
+                        <input type="number" id="longitude" value="-111.0" step="0.0001" min="-180" max="180">
+                        <span>°E</span>
+                    </div>
+                    <div class="location-action-buttons">
+                        <button id="btn-use-gps" class="btn">Use Mount GPS</button>
+                        <button id="btn-save-site" class="btn">Save Site</button>
+                        <button id="btn-apply-location" class="btn btn-primary">Apply</button>
+                    </div>
+                    <div id="location-status" class="location-status"></div>
+                </div>
+            </section>
+
             <!-- Position Display -->
             <section class="panel position-panel">
                 <h2>Mount Position</h2>
@@ -62,7 +114,7 @@
                     </div>
                     <div class="pa-progress">
                         <div class="progress-bar">
-                            <div id="pa-progress-fill" class="progress-fill"></div>
+                            <div id="pa-progress-fill" class="progress-fill" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
                         </div>
                         <span id="pa-status">Not measured</span>
                     </div>
@@ -82,7 +134,7 @@
                         <span>arcsec</span>
                     </div>
                 </div>
-                <div id="align-status" class="status-log"></div>
+                <div id="align-status" class="status-log" role="log" aria-live="polite"></div>
             </section>
 
             <!-- RA/DEC Jog Controls -->
@@ -156,20 +208,6 @@
                 <div id="solve-result" class="solve-result"></div>
             </section>
 
-            <!-- Connection Panel -->
-            <section class="panel connect-panel">
-                <h2>Connection</h2>
-                <div class="connect-controls">
-                    <div class="setting">
-                        <label>Serial Port:</label>
-                        <input type="text" id="serial-port" value="/dev/ttyACM0">
-                    </div>
-                    <div class="connect-buttons">
-                        <button id="btn-connect" class="btn btn-primary">Connect</button>
-                        <button id="btn-disconnect" class="btn">Disconnect</button>
-                    </div>
-                </div>
-            </section>
         </main>
 
         <!-- Footer -->

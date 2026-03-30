@@ -11,6 +11,7 @@ Flask application
 """
 
 import os
+import json
 import time
 import logging
 import threading
@@ -43,6 +44,47 @@ alignment_running = False
 alignment_thread = None
 last_pa_error = None
 last_solve_result = None
+
+LOCATIONS_FILE = '/etc/oat-web-pa/locations.json'
+
+def load_locations() -> dict:
+    """
+    *****
+    Purpose: Load saved location presets from disk
+
+    Parameters:
+    None
+
+    Returns:
+    dict: Mapping of site name to {'latitude': float, 'longitude': float}
+    *****
+    """
+    if os.path.exists(LOCATIONS_FILE):
+        try:
+            with open(LOCATIONS_FILE) as f:
+                return json.load(f)
+        except Exception as e:
+            logger.warning(f"Could not load locations file: {e}")
+    return {}
+
+def save_locations(locations: dict) -> None:
+    """
+    *****
+    Purpose: Save location presets to disk
+
+    Parameters:
+    dict locations: Mapping of site name to coordinate dict
+
+    Returns:
+    None
+    *****
+    """
+    try:
+        os.makedirs(os.path.dirname(LOCATIONS_FILE), exist_ok=True)
+        with open(LOCATIONS_FILE, 'w') as f:
+            json.dump(locations, f, indent=2)
+    except Exception as e:
+        logger.error(f"Could not save locations file: {e}")
 
 
 # ============================================================================
@@ -416,6 +458,107 @@ def api_settings():
             config.LONGITUDE = float(data['longitude'])
 
         return jsonify({'success': True})
+
+
+@app.route('/api/locations', methods=['GET'])
+def api_locations_get():
+    """Get all saved location presets."""
+    return jsonify(load_locations())
+
+
+@app.route('/api/locations', methods=['POST'])
+def api_locations_save():
+    """
+    *****
+    Purpose: Save or update a named location preset
+
+    Parameters:
+    JSON body:
+        name: Site name
+        latitude: Decimal degrees N
+        longitude: Decimal degrees E
+
+    Returns:
+    JSON: Success/error response
+    *****
+    """
+    data = request.get_json() or {}
+    name = data.get('name', '').strip()
+    lat = data.get('latitude')
+    lon = data.get('longitude')
+
+    if not name or lat is None or lon is None:
+        return jsonify({'error': 'name, latitude, and longitude required'}), 400
+
+    locations = load_locations()
+    locations[name] = {'latitude': float(lat), 'longitude': float(lon)}
+    save_locations(locations)
+    return jsonify({'success': True})
+
+
+@app.route('/api/locations/<name>', methods=['DELETE'])
+def api_locations_delete(name):
+    """Delete a named location preset."""
+    locations = load_locations()
+    if name in locations:
+        del locations[name]
+        save_locations(locations)
+    return jsonify({'success': True})
+
+
+@app.route('/api/location/apply', methods=['POST'])
+def api_location_apply():
+    """
+    *****
+    Purpose: Apply latitude/longitude to active configuration
+
+    Parameters:
+    JSON body:
+        latitude: Decimal degrees N
+        longitude: Decimal degrees E
+
+    Returns:
+    JSON: Success/error response with applied coordinates
+    *****
+    """
+    data = request.get_json() or {}
+    lat = data.get('latitude')
+    lon = data.get('longitude')
+
+    if lat is None or lon is None:
+        return jsonify({'error': 'latitude and longitude required'}), 400
+
+    config.LATITUDE = float(lat)
+    config.LONGITUDE = float(lon)
+    logger.info(f"Location applied: {config.LATITUDE:.4f}N, {config.LONGITUDE:.4f}E")
+    return jsonify({'success': True, 'latitude': config.LATITUDE, 'longitude': config.LONGITUDE})
+
+
+@app.route('/api/location/from-mount', methods=['GET'])
+def api_location_from_mount():
+    """
+    *****
+    Purpose: Query mount for GPS-sourced site coordinates
+
+    Reads site latitude/longitude from the mount via LX200 :Gt#/:Gg# commands.
+    On OAT builds with GPS, these return GPS coordinates.
+
+    Parameters:
+    None
+
+    Returns:
+    JSON: latitude and longitude in decimal degrees, or error
+    *****
+    """
+    mount = get_mount_client()
+    if not mount.connected:
+        return jsonify({'error': 'Mount not connected'}), 400
+
+    lat, lon = mount.get_site_location()
+    if lat is None or lon is None:
+        return jsonify({'error': 'Could not read location from mount — check GPS lock'}), 500
+
+    return jsonify({'latitude': lat, 'longitude': lon})
 
 
 # ============================================================================

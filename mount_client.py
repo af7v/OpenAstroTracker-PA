@@ -516,6 +516,76 @@ class MountClient:
         """
         self.send_command(":MAAH#", expect_response=False)
 
+    def _parse_lx200_angle(self, raw: str) -> Optional[float]:
+        """
+        *****
+        Purpose: Parse LX200 angle string in sDD*MM format to decimal degrees
+
+        Parameters:
+        str raw: Raw LX200 angle string (e.g. '+51*30' or '-12*15')
+
+        Returns:
+        float: Decimal degrees, or None if unparseable
+        *****
+        """
+        try:
+            s = raw.strip().rstrip('#')
+            if not s:
+                return None
+            sign = -1.0 if s.startswith('-') else 1.0
+            if s[0] in ('+', '-'):
+                s = s[1:]
+            parts = s.split('*')
+            if len(parts) != 2:
+                return None
+            degrees = float(parts[0])
+            minutes = float(parts[1])
+            return sign * (degrees + minutes / 60.0)
+        except Exception:
+            return None
+
+    def get_site_location(self) -> Tuple[Optional[float], Optional[float]]:
+        """
+        *****
+        Purpose: Query mount for site latitude and longitude via LX200 commands
+
+        Sends :Gt# (latitude) and :Gg# (longitude) to the mount.
+        If a GPS unit is connected to the OAT, these values are GPS-sourced.
+        If not, they reflect the mount's configured site location.
+
+        Note: Standard LX200 :Gg# returns longitude West-positive (legacy
+        astronomical convention). OAT firmware may differ. The conversion
+        below negates the longitude to produce East-positive decimal degrees
+        matching the convention used in config.py. If GPS reads inverted on
+        your hardware, negate the longitude value in the caller.
+
+        Parameters:
+        None
+
+        Returns:
+        Tuple[float, float]: (latitude_degrees, longitude_degrees) or (None, None)
+        *****
+        """
+        lat_raw = self.send_command(":Gt#")
+        lon_raw = self.send_command(":Gg#")
+
+        logger.debug(f"get_site_location raw: lat={lat_raw!r} lon={lon_raw!r}")
+
+        if lat_raw is None or lon_raw is None:
+            return (None, None)
+
+        lat = self._parse_lx200_angle(lat_raw)
+        lon = self._parse_lx200_angle(lon_raw)
+
+        if lat is None or lon is None:
+            logger.debug("get_site_location: failed to parse lat/lon")
+            return (None, None)
+
+        lon = -lon  # Convert West-positive to East-positive
+
+        logger.debug(f"get_site_location parsed: lat={lat:.4f} lon={lon:.4f}")
+        return (lat, lon)
+
 
 # Singleton instance
 _mount_client = None
