@@ -27,8 +27,8 @@ case "$1" in
         "$OAT_DIR/venv/bin/pip" install -r "$OAT_DIR/requirements.txt"
 
         # Create capture directory
-        mkdir -p /tmp/oat-pa-captures
-        chown "$OAT_USER:$OAT_USER" /tmp/oat-pa-captures
+        mkdir -p /var/lib/oat-web-pa/captures
+        chown "$OAT_USER:$OAT_USER" /var/lib/oat-web-pa/captures
 
         # Set ownership
         chown -R "$OAT_USER:$OAT_USER" "$OAT_DIR"

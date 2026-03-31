@@ -192,7 +192,7 @@ async function apiCall(endpoint, method = 'GET', data = null) {
     if (data) {
         options.body = JSON.stringify(data);
     }
-    const response = await fetch(`/api/${endpoint}`, options);
+    const response = await fetch(`api/${endpoint}`, options);
     if (!response.ok) {
         let errorMsg = response.statusText;
         try {

@@ -16,7 +16,7 @@ RestartSec=5
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/tmp/oat-pa-captures
+ReadWritePaths=/var/lib/oat-web-pa/captures
 PrivateTmp=false
 
 [Install]

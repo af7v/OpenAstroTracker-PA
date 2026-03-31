@@ -6,7 +6,7 @@ case "$1" in
         # Remove virtual environment and config
         rm -rf /opt/oat-web-pa/venv
         rm -rf /etc/oat-web-pa
-        rm -rf /tmp/oat-pa-captures
+        rm -rf /var/lib/oat-web-pa
 
         # Remove user
         if id -u "oat-pa" >/dev/null 2>&1; then

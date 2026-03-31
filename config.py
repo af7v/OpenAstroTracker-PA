@@ -55,7 +55,7 @@ WEB_PORT = 5000
 DEBUG = False
 
 # File Paths
-CAPTURE_DIR = "/tmp/oat-pa-captures"
+CAPTURE_DIR = "/var/lib/oat-web-pa/captures"
 
 # Load local configuration overrides from /etc/oat-web-pa/config.py.
 # This file is created by the .deb postinst script and is the intended

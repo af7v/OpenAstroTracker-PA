@@ -34,57 +34,58 @@ import config
 logger = logging.getLogger(__name__)
 
 
-class IndiClient(PyIndi.BaseClient):
-    """
-    *****
-    Purpose: PyIndi client wrapper for receiving INDI events
+if INDI_AVAILABLE:
+    class IndiClient(PyIndi.BaseClient):
+        """
+        *****
+        Purpose: PyIndi client wrapper for receiving INDI events
 
-    Parameters:
-    None
+        Parameters:
+        None
 
-    Returns:
-    IndiClient instance
-    *****
-    """
-    def __init__(self):
-        super(IndiClient, self).__init__()
-        self.device = None
-        self.connected_event = threading.Event()
+        Returns:
+        IndiClient instance
+        *****
+        """
+        def __init__(self):
+            super(IndiClient, self).__init__()
+            self.device = None
+            self.connected_event = threading.Event()
 
-    def newDevice(self, d):
-        logger.debug(f"New device: {d.getDeviceName()}")
+        def newDevice(self, d):
+            logger.debug(f"New device: {d.getDeviceName()}")
 
-    def newProperty(self, p):
-        pass
+        def newProperty(self, p):
+            pass
 
-    def removeProperty(self, p):
-        pass
+        def removeProperty(self, p):
+            pass
 
-    def newBLOB(self, bp):
-        pass
+        def newBLOB(self, bp):
+            pass
 
-    def newSwitch(self, svp):
-        pass
+        def newSwitch(self, svp):
+            pass
 
-    def newNumber(self, nvp):
-        pass
+        def newNumber(self, nvp):
+            pass
 
-    def newText(self, tvp):
-        pass
+        def newText(self, tvp):
+            pass
 
-    def newLight(self, lvp):
-        pass
+        def newLight(self, lvp):
+            pass
 
-    def newMessage(self, d, m):
-        logger.debug(f"Message from {d.getDeviceName()}: {m}")
+        def newMessage(self, d, m):
+            logger.debug(f"Message from {d.getDeviceName()}: {m}")
 
-    def serverConnected(self):
-        logger.info("Connected to INDI server")
-        self.connected_event.set()
+        def serverConnected(self):
+            logger.info("Connected to INDI server")
+            self.connected_event.set()
 
-    def serverDisconnected(self, code):
-        logger.warning(f"Disconnected from INDI server (code: {code})")
-        self.connected_event.clear()
+        def serverDisconnected(self, code):
+            logger.warning(f"Disconnected from INDI server (code: {code})")
+            self.connected_event.clear()
 
 
 class MountClient:
