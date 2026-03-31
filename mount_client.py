@@ -540,7 +540,8 @@ class MountClient:
             degrees = float(parts[0])
             minutes = float(parts[1])
             return sign * (degrees + minutes / 60.0)
-        except Exception:
+        except (ValueError, IndexError) as e:
+            logger.warning(f"_parse_lx200_angle: could not parse {raw!r}: {e}")
             return None
 
     def get_site_location(self) -> Tuple[Optional[float], Optional[float]]:
@@ -577,7 +578,10 @@ class MountClient:
         lon = self._parse_lx200_angle(lon_raw)
 
         if lat is None or lon is None:
-            logger.debug("get_site_location: failed to parse lat/lon")
+            logger.warning(
+                f"get_site_location: failed to parse lat/lon from raw responses "
+                f"lat={lat_raw!r} lon={lon_raw!r}"
+            )
             return (None, None)
 
         lon = -lon  # Convert West-positive to East-positive

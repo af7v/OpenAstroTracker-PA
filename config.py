@@ -74,7 +74,7 @@ if os.path.exists(_OVERRIDE_PATH):
             for _key in [k for k in dir(_override) if k.isupper()]:
                 globals()[_key] = getattr(_override, _key)
             del _override
-    except Exception as _e:
+    except (ImportError, OSError, AttributeError) as _e:
         import logging as _logging
         _logging.error(f"Failed to load config override from {_OVERRIDE_PATH}: {_e}")
     finally:

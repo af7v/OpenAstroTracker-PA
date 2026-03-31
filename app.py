@@ -89,7 +89,7 @@ def save_locations(locations: dict) -> bool:
         with open(LOCATIONS_FILE, 'w') as f:
             json.dump(locations, f, indent=2)
         return True
-    except Exception as e:
+    except (OSError, PermissionError) as e:
         logger.error(f"Could not save locations file: {e}")
         return False
 
@@ -488,7 +488,17 @@ def api_settings():
 
 @app.route('/api/locations', methods=['GET'])
 def api_locations_get():
-    """Get all saved location presets."""
+    """
+    *****
+    Purpose: Return all saved location presets as a JSON object
+
+    Parameters:
+    None
+
+    Returns:
+    JSON: Mapping of site name to {latitude, longitude}
+    *****
+    """
     return jsonify(load_locations())
 
 
@@ -531,7 +541,17 @@ def api_locations_save():
 
 @app.route('/api/locations/<name>', methods=['DELETE'])
 def api_locations_delete(name):
-    """Delete a named location preset."""
+    """
+    *****
+    Purpose: Delete a named location preset
+
+    Parameters:
+    str name: URL-encoded site name to delete
+
+    Returns:
+    JSON: Success response, or 404 if name not found, 500 if disk write fails
+    *****
+    """
     locations = load_locations()
     if name not in locations:
         return jsonify({'error': f'Location "{name}" not found'}), 404

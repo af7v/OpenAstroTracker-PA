@@ -160,6 +160,20 @@ function initEventListeners() {
     });
 }
 
+/*
+ *****
+ * Purpose: Validate a numeric input value against a min/max range
+ *
+ * Parameters:
+ * string value: Raw string value from an input element
+ * number min: Minimum allowed value (inclusive)
+ * number max: Maximum allowed value (inclusive)
+ * string fieldName: Human-readable field name for error messages
+ *
+ * Returns:
+ * number: Parsed value if valid, null if invalid (error logged to status)
+ *****
+ */
 function validateNumericInput(value, min, max, fieldName) {
     const num = parseFloat(value);
     if (isNaN(num) || num < min || num > max) {
@@ -459,6 +473,18 @@ function addStatusLog(message, level = 'info') {
 }
 
 // Location presets
+
+/*
+ *****
+ * Purpose: Fetch all saved location presets and populate the dropdown
+ *
+ * Parameters:
+ * None
+ *
+ * Returns:
+ * void
+ *****
+ */
 async function loadLocations() {
     try {
         const result = await apiCall('locations');
@@ -478,6 +504,17 @@ async function loadLocations() {
     }
 }
 
+/*
+ *****
+ * Purpose: Load the currently selected location preset into the coordinate fields
+ *
+ * Parameters:
+ * None (reads from elements.locationSelect.value)
+ *
+ * Returns:
+ * void
+ *****
+ */
 async function loadSelectedLocation() {
     const name = elements.locationSelect.value;
     if (!name) return;
@@ -492,10 +529,22 @@ async function loadSelectedLocation() {
             setLocationStatus(`Location "${name}" not found`, 'error');
         }
     } catch (e) {
-        setLocationStatus('Failed to load site', 'error');
+        console.error('Failed to load selected location:', e);
+        setLocationStatus(`Failed to load site: ${e.message}`, 'error');
     }
 }
 
+/*
+ *****
+ * Purpose: Save the current coordinate fields as a named location preset
+ *
+ * Parameters:
+ * None (reads from elements.siteName, elements.latitude, elements.longitude)
+ *
+ * Returns:
+ * void
+ *****
+ */
 async function saveSite() {
     const name = elements.siteName.value.trim();
     const lat = parseFloat(elements.latitude.value);
@@ -510,12 +559,23 @@ async function saveSite() {
             return;
         }
         setLocationStatus(`Saved: ${name}`, 'success');
-        loadLocations();
+        await loadLocations();
     } catch (e) {
         setLocationStatus(`Save error: ${e.message}`, 'error');
     }
 }
 
+/*
+ *****
+ * Purpose: Delete the currently selected location preset
+ *
+ * Parameters:
+ * None (reads from elements.locationSelect.value)
+ *
+ * Returns:
+ * void
+ *****
+ */
 async function deleteLocation() {
     const name = elements.locationSelect.value;
     if (!name) return;
@@ -527,12 +587,23 @@ async function deleteLocation() {
         }
         setLocationStatus(`Deleted: ${name}`, 'info');
         elements.siteName.value = '';
-        loadLocations();
+        await loadLocations();
     } catch (e) {
         setLocationStatus(`Delete error: ${e.message}`, 'error');
     }
 }
 
+/*
+ *****
+ * Purpose: Apply the current coordinate fields to the active server configuration
+ *
+ * Parameters:
+ * None (reads from elements.latitude, elements.longitude)
+ *
+ * Returns:
+ * void
+ *****
+ */
 async function applyLocation() {
     const lat = parseFloat(elements.latitude.value);
     const lon = parseFloat(elements.longitude.value);
@@ -550,18 +621,25 @@ async function applyLocation() {
     }
 }
 
+/*
+ *****
+ * Purpose: Read GPS coordinates from the mount and populate the coordinate fields
+ *
+ * Parameters:
+ * None
+ *
+ * Returns:
+ * void
+ *****
+ */
 async function useGps() {
     elements.btnUseGps.disabled = true;
     elements.btnUseGps.textContent = 'Reading GPS...';
     try {
         const result = await apiCall('location/from-mount');
-        if (result.latitude !== undefined) {
-            elements.latitude.value = result.latitude.toFixed(4);
-            elements.longitude.value = result.longitude.toFixed(4);
-            setLocationStatus(`GPS: ${result.latitude.toFixed(4)}°N, ${result.longitude.toFixed(4)}°E`, 'success');
-        } else {
-            setLocationStatus(`GPS read failed: ${result.error}`, 'error');
-        }
+        elements.latitude.value = result.latitude.toFixed(4);
+        elements.longitude.value = result.longitude.toFixed(4);
+        setLocationStatus(`GPS: ${result.latitude.toFixed(4)}°N, ${result.longitude.toFixed(4)}°E`, 'success');
     } catch (e) {
         setLocationStatus(`GPS error: ${e.message}`, 'error');
     }
@@ -569,6 +647,18 @@ async function useGps() {
     elements.btnUseGps.textContent = 'Use Mount GPS';
 }
 
+/*
+ *****
+ * Purpose: Update the location settings status message and apply a CSS level class
+ *
+ * Parameters:
+ * string message: Status message to display
+ * string level: CSS level class ('info', 'success', or 'error'), default 'info'
+ *
+ * Returns:
+ * void
+ *****
+ */
 function setLocationStatus(message, level = 'info') {
     elements.locationStatus.textContent = message;
     elements.locationStatus.className = `location-status ${level}`;
