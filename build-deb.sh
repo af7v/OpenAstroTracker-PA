@@ -5,7 +5,7 @@
 set -e
 
 PACKAGE_NAME="oat-web-pa"
-VERSION="1.0.0"
+VERSION="1.1.0"
 ARCH="all"
 
 # Get the script directory
@@ -39,7 +39,7 @@ cp "${SCRIPT_DIR}/static/style.css" "${PACKAGE_DIR}/opt/oat-web-pa/static/"
 cp "${SCRIPT_DIR}/static/app.js" "${PACKAGE_DIR}/opt/oat-web-pa/static/"
 cp "${SCRIPT_DIR}/templates/index.html" "${PACKAGE_DIR}/opt/oat-web-pa/templates/"
 
-cp "${SCRIPT_DIR}/oat-web-pa.service" "${PACKAGE_DIR}/etc/systemd/system/"
+sed 's/\r$//' "${SCRIPT_DIR}/oat-web-pa.service" > "${PACKAGE_DIR}/etc/systemd/system/oat-web-pa.service"
 
 # Create DEBIAN control file
 echo "Creating control file..."
@@ -63,11 +63,13 @@ Description: Web-based polar alignment for OpenAstroTracker
  jog controls, ASTAP and astrometry.net solver support.
 EOF
 
-# Copy maintainer scripts
+# Copy maintainer scripts and strip Windows line endings (CRLF -> LF).
+# Source files may have CRLF when the repo is on a Windows/OneDrive filesystem.
+# A \r in the shebang causes "No such file or directory" on dpkg --install.
 echo "Copying maintainer scripts..."
-cp "${SCRIPT_DIR}/debian/postinst" "${PACKAGE_DIR}/DEBIAN/"
-cp "${SCRIPT_DIR}/debian/prerm" "${PACKAGE_DIR}/DEBIAN/"
-cp "${SCRIPT_DIR}/debian/postrm" "${PACKAGE_DIR}/DEBIAN/"
+for script in postinst prerm postrm; do
+    sed 's/\r$//' "${SCRIPT_DIR}/debian/${script}" > "${PACKAGE_DIR}/DEBIAN/${script}"
+done
 
 # Set permissions
 chmod 755 "${PACKAGE_DIR}/DEBIAN/postinst"
