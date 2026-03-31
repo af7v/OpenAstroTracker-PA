@@ -179,6 +179,14 @@ async function apiCall(endpoint, method = 'GET', data = null) {
         options.body = JSON.stringify(data);
     }
     const response = await fetch(`/api/${endpoint}`, options);
+    if (!response.ok) {
+        let errorMsg = response.statusText;
+        try {
+            const body = await response.json();
+            if (body.error) errorMsg = body.error;
+        } catch (_) { /* body was not JSON */ }
+        throw new Error(`HTTP ${response.status}: ${errorMsg}`);
+    }
     return response.json();
 }
 
@@ -414,14 +422,23 @@ async function captureAndSolve() {
 // Auto-align
 async function toggleAutoAlign() {
     if (alignmentRunning) {
-        await apiCall('auto-align/stop', 'POST');
-        addStatusLog('Auto-align stopped', 'info');
+        try {
+            const result = await apiCall('auto-align/stop', 'POST');
+            if (result.error) {
+                addStatusLog(`Stop failed: ${result.error}`, 'error');
+            } else {
+                addStatusLog('Auto-align stopped', 'info');
+            }
+        } catch (e) {
+            addStatusLog(`Stop error: ${e.message}`, 'error');
+        }
     } else {
         const targetAccuracy = validateNumericInput(elements.targetAccuracy.value, 1, 600, 'target accuracy');
         if (targetAccuracy === null) return;
-        const result = await apiCall('auto-align/start', 'POST', { target_accuracy: targetAccuracy });
-        if (result.error) {
-            addStatusLog(`Auto-align error: ${result.error}`, 'error');
+        try {
+            await apiCall('auto-align/start', 'POST', { target_accuracy: targetAccuracy });
+        } catch (e) {
+            addStatusLog(`Auto-align error: ${e.message}`, 'error');
         }
     }
     pollStatus();
@@ -523,10 +540,10 @@ async function applyLocation() {
     if (isNaN(lon) || lon < -180 || lon > 180) { setLocationStatus('Invalid longitude', 'error'); return; }
     try {
         const result = await apiCall('location/apply', 'POST', { latitude: lat, longitude: lon });
-        if (result.success) {
-            setLocationStatus(`Applied: ${lat.toFixed(4)}°N, ${lon.toFixed(4)}°E`, 'success');
-        } else {
+        if (result.error) {
             setLocationStatus(`Apply failed: ${result.error}`, 'error');
+        } else {
+            setLocationStatus(`Applied: ${lat.toFixed(4)}°N, ${lon.toFixed(4)}°E`, 'success');
         }
     } catch (e) {
         setLocationStatus(`Apply error: ${e.message}`, 'error');

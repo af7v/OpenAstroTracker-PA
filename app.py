@@ -525,7 +525,7 @@ def api_locations_save():
     locations = load_locations()
     locations[name] = {'latitude': lat_val, 'longitude': lon_val}
     if not save_locations(locations):
-        return jsonify({'error': 'Location updated in memory but could not be written to disk'}), 500
+        return jsonify({'error': 'Could not save location to disk'}), 500
     return jsonify({'success': True})
 
 
@@ -533,10 +533,11 @@ def api_locations_save():
 def api_locations_delete(name):
     """Delete a named location preset."""
     locations = load_locations()
-    if name in locations:
-        del locations[name]
-        if not save_locations(locations):
-            return jsonify({'error': 'Location removed from memory but could not be written to disk'}), 500
+    if name not in locations:
+        return jsonify({'error': f'Location "{name}" not found'}), 404
+    del locations[name]
+    if not save_locations(locations):
+        return jsonify({'error': 'Could not save changes to disk'}), 500
     return jsonify({'success': True})
 
 
