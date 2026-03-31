@@ -13,8 +13,8 @@ Pillow>=9.0
 opencv-python-headless>=4.0  # For V4L2 camera support
 numpy>=1.20
 
-# INDI (install via apt on Pi: sudo apt install python3-indi)
-# pyindi-client  # Uncomment if installing via pip
+# Serial communication
+pyserial>=3.5
 
 # Utilities
 watchdog>=2.0

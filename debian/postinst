@@ -18,7 +18,7 @@ case "$1" in
         # Create virtual environment if it doesn't exist
         if [ ! -d "$OAT_DIR/venv" ]; then
             echo "Creating Python virtual environment..."
-            python3 -m venv "$OAT_DIR/venv"
+            python3 -m venv --system-site-packages "$OAT_DIR/venv"
         fi
 
         # Install/upgrade pip dependencies
