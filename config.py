@@ -62,10 +62,20 @@ CAPTURE_DIR = "/tmp/oat-pa-captures"
 # location for site-specific settings (LATITUDE, LONGITUDE, etc.).
 _OVERRIDE_PATH = "/etc/oat-web-pa/config.py"
 if os.path.exists(_OVERRIDE_PATH):
-    _spec = importlib.util.spec_from_file_location("config_override", _OVERRIDE_PATH)
-    _override = importlib.util.module_from_spec(_spec)
-    _spec.loader.exec_module(_override)
-    for _key in dir(_override):
-        if _key.isupper():
-            globals()[_key] = getattr(_override, _key)
-    del _spec, _override, _key
+    try:
+        _spec = importlib.util.spec_from_file_location("config_override", _OVERRIDE_PATH)
+        if _spec is None or _spec.loader is None:
+            import logging as _logging
+            _logging.error(f"Could not load config override: invalid spec for {_OVERRIDE_PATH}")
+        else:
+            _override = importlib.util.module_from_spec(_spec)
+            _spec.loader.exec_module(_override)
+            for _key in dir(_override):
+                if _key.isupper():
+                    globals()[_key] = getattr(_override, _key)
+            del _override, _key
+    except Exception as _e:
+        import logging as _logging
+        _logging.error(f"Failed to load config override from {_OVERRIDE_PATH}: {_e}")
+    finally:
+        del _spec

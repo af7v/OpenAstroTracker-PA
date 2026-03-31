@@ -63,8 +63,10 @@ def load_locations() -> dict:
         try:
             with open(LOCATIONS_FILE) as f:
                 return json.load(f)
-        except Exception as e:
-            logger.warning(f"Could not load locations file: {e}")
+        except json.JSONDecodeError as e:
+            logger.error(f"Locations file is corrupt and could not be parsed: {e}")
+        except OSError as e:
+            logger.error(f"Could not read locations file: {e}")
     return {}
 
 def save_locations(locations: dict) -> bool:
@@ -257,7 +259,10 @@ def api_slew_rate():
 def api_move_az():
     """Move azimuth by specified arcminutes."""
     data = request.get_json() or {}
-    arcmin = float(data.get('arcmin', 0))
+    try:
+        arcmin = float(data.get('arcmin', 0))
+    except (ValueError, TypeError):
+        return jsonify({'error': 'arcmin must be a number'}), 400
 
     mount = get_mount_client()
     if not mount.connected:
@@ -271,7 +276,10 @@ def api_move_az():
 def api_move_alt():
     """Move altitude by specified arcminutes."""
     data = request.get_json() or {}
-    arcmin = float(data.get('arcmin', 0))
+    try:
+        arcmin = float(data.get('arcmin', 0))
+    except (ValueError, TypeError):
+        return jsonify({'error': 'arcmin must be a number'}), 400
 
     mount = get_mount_client()
     if not mount.connected:
@@ -311,8 +319,11 @@ def api_capture():
     *****
     """
     data = request.get_json() or {}
-    exposure = float(data.get('exposure', config.DEFAULT_EXPOSURE))
-    gain = int(data.get('gain', config.DEFAULT_GAIN))
+    try:
+        exposure = float(data.get('exposure', config.DEFAULT_EXPOSURE))
+        gain = int(data.get('gain', config.DEFAULT_GAIN))
+    except (ValueError, TypeError):
+        return jsonify({'error': 'exposure must be a number; gain must be an integer'}), 400
 
     camera = get_camera_client()
     if not camera.connected:
@@ -414,7 +425,10 @@ def api_auto_align_start():
         return jsonify({'error': 'Alignment already running'}), 400
 
     data = request.get_json() or {}
-    target_accuracy = float(data.get('target_accuracy', config.TARGET_ACCURACY))
+    try:
+        target_accuracy = float(data.get('target_accuracy', config.TARGET_ACCURACY))
+    except (ValueError, TypeError):
+        return jsonify({'error': 'target_accuracy must be a number'}), 400
 
     alignment_running = True
     alignment_thread = threading.Thread(
@@ -452,15 +466,22 @@ def api_settings():
     else:
         data = request.get_json() or {}
 
-        if 'target_accuracy' in data:
-            config.TARGET_ACCURACY = float(data['target_accuracy'])
+        try:
+            new_target = float(data['target_accuracy']) if 'target_accuracy' in data else None
+            new_lat = float(data['latitude']) if 'latitude' in data else None
+            new_lon = float(data['longitude']) if 'longitude' in data else None
+        except (ValueError, TypeError) as e:
+            return jsonify({'error': f'Invalid numeric value: {e}'}), 400
+
+        if new_target is not None:
+            config.TARGET_ACCURACY = new_target
         if 'solver' in data:
             config.SOLVER = data['solver']
             get_plate_solver().set_solver(data['solver'])
-        if 'latitude' in data:
-            config.LATITUDE = float(data['latitude'])
-        if 'longitude' in data:
-            config.LONGITUDE = float(data['longitude'])
+        if new_lat is not None:
+            config.LATITUDE = new_lat
+        if new_lon is not None:
+            config.LONGITUDE = new_lon
 
         return jsonify({'success': True})
 

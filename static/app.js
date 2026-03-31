@@ -202,7 +202,14 @@ async function connect() {
 }
 
 async function disconnect() {
-    await apiCall('disconnect', 'POST');
+    try {
+        const result = await apiCall('disconnect', 'POST');
+        if (result.error) {
+            addStatusLog(`Disconnect failed: ${result.error}`, 'error');
+        }
+    } catch (e) {
+        addStatusLog(`Disconnect error: ${e.message}`, 'error');
+    }
     pollStatus();
 }
 
@@ -277,32 +284,60 @@ function updateDisplay(status) {
 
 // Slew functions
 async function startSlew(direction) {
-    if (direction === 'a') {
-        await apiCall('slew', 'POST', { direction: 'a', action: 'stop' });
-    } else {
-        await apiCall('slew', 'POST', { direction: direction, action: 'start' });
+    try {
+        if (direction === 'a') {
+            await apiCall('slew', 'POST', { direction: 'a', action: 'stop' });
+        } else {
+            await apiCall('slew', 'POST', { direction: direction, action: 'start' });
+        }
+    } catch (e) {
+        addStatusLog(`Slew error: ${e.message}`, 'error');
     }
 }
 
 async function stopSlew(direction) {
     if (direction !== 'a') {
-        await apiCall('slew', 'POST', { direction: direction, action: 'stop' });
+        try {
+            await apiCall('slew', 'POST', { direction: direction, action: 'stop' });
+        } catch (e) {
+            addStatusLog(`Stop slew error: ${e.message} — check mount connection`, 'error');
+        }
     }
 }
 
 async function setSlewRate(rate) {
-    await apiCall('slew-rate', 'POST', { rate: rate });
+    try {
+        await apiCall('slew-rate', 'POST', { rate: rate });
+    } catch (e) {
+        addStatusLog(`Set slew rate error: ${e.message}`, 'error');
+    }
 }
 
 // AZ/ALT movement
 async function moveAz(arcmin) {
-    await apiCall('move-az', 'POST', { arcmin: arcmin });
-    addStatusLog(`Moving AZ by ${arcmin > 0 ? '+' : ''}${arcmin.toFixed(1)}'`, 'info');
+    try {
+        const result = await apiCall('move-az', 'POST', { arcmin: arcmin });
+        if (result.error) {
+            addStatusLog(`AZ move failed: ${result.error}`, 'error');
+        } else {
+            addStatusLog(`Moving AZ by ${arcmin > 0 ? '+' : ''}${arcmin.toFixed(1)}'`, 'info');
+        }
+    } catch (e) {
+        addStatusLog(`AZ move error: ${e.message}`, 'error');
+    }
 }
 
 async function moveAlt(arcmin) {
-    await apiCall('move-alt', 'POST', { arcmin: arcmin });
-    addStatusLog(`Moving ALT by ${arcmin > 0 ? '+' : ''}${arcmin.toFixed(1)}'`, 'info');
+    try {
+        const result = await apiCall('move-alt', 'POST', { arcmin: arcmin });
+        if (result.error) {
+            addStatusLog(`ALT move failed: ${result.error}`, 'error');
+        } else {
+            addStatusLog(`Moving ALT by ${arcmin > 0 ? '+' : ''}${arcmin.toFixed(1)}'`, 'info');
+        }
+    } catch (e) {
+        addStatusLog(`ALT move error: ${e.message}`, 'error');
+    }
 }
 
 // Capture functions
@@ -384,7 +419,10 @@ async function toggleAutoAlign() {
     } else {
         const targetAccuracy = validateNumericInput(elements.targetAccuracy.value, 1, 600, 'target accuracy');
         if (targetAccuracy === null) return;
-        await apiCall('auto-align/start', 'POST', { target_accuracy: targetAccuracy });
+        const result = await apiCall('auto-align/start', 'POST', { target_accuracy: targetAccuracy });
+        if (result.error) {
+            addStatusLog(`Auto-align error: ${result.error}`, 'error');
+        }
     }
     pollStatus();
 }
@@ -419,6 +457,7 @@ async function loadLocations() {
         if (current) select.value = current;
     } catch (e) {
         console.error('Failed to load locations:', e);
+        setLocationStatus('Could not load saved locations', 'error');
     }
 }
 
@@ -432,6 +471,8 @@ async function loadSelectedLocation() {
             elements.longitude.value = locations[name].longitude;
             elements.siteName.value = name;
             setLocationStatus(`Loaded: ${name}`, 'success');
+        } else {
+            setLocationStatus(`Location "${name}" not found`, 'error');
         }
     } catch (e) {
         setLocationStatus('Failed to load site', 'error');
@@ -445,13 +486,17 @@ async function saveSite() {
     if (!name) { setLocationStatus('Enter a site name first', 'error'); return; }
     if (isNaN(lat) || lat < -90 || lat > 90) { setLocationStatus('Invalid latitude (−90 to 90)', 'error'); return; }
     if (isNaN(lon) || lon < -180 || lon > 180) { setLocationStatus('Invalid longitude (−180 to 180)', 'error'); return; }
-    const result = await apiCall('locations', 'POST', { name, latitude: lat, longitude: lon });
-    if (result.error) {
-        setLocationStatus(`Save failed: ${result.error}`, 'error');
-        return;
+    try {
+        const result = await apiCall('locations', 'POST', { name, latitude: lat, longitude: lon });
+        if (result.error) {
+            setLocationStatus(`Save failed: ${result.error}`, 'error');
+            return;
+        }
+        setLocationStatus(`Saved: ${name}`, 'success');
+        loadLocations();
+    } catch (e) {
+        setLocationStatus(`Save error: ${e.message}`, 'error');
     }
-    setLocationStatus(`Saved: ${name}`, 'success');
-    loadLocations();
 }
 
 async function deleteLocation() {
@@ -476,11 +521,15 @@ async function applyLocation() {
     const lon = parseFloat(elements.longitude.value);
     if (isNaN(lat) || lat < -90 || lat > 90) { setLocationStatus('Invalid latitude', 'error'); return; }
     if (isNaN(lon) || lon < -180 || lon > 180) { setLocationStatus('Invalid longitude', 'error'); return; }
-    const result = await apiCall('location/apply', 'POST', { latitude: lat, longitude: lon });
-    if (result.success) {
-        setLocationStatus(`Applied: ${lat.toFixed(4)}°N, ${lon.toFixed(4)}°E`, 'success');
-    } else {
-        setLocationStatus(`Apply failed: ${result.error}`, 'error');
+    try {
+        const result = await apiCall('location/apply', 'POST', { latitude: lat, longitude: lon });
+        if (result.success) {
+            setLocationStatus(`Applied: ${lat.toFixed(4)}°N, ${lon.toFixed(4)}°E`, 'success');
+        } else {
+            setLocationStatus(`Apply failed: ${result.error}`, 'error');
+        }
+    } catch (e) {
+        setLocationStatus(`Apply error: ${e.message}`, 'error');
     }
 }
 
