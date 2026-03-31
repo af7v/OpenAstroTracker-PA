@@ -16,7 +16,7 @@ import importlib.util
 # INDI Server Settings
 INDI_HOST = "localhost"
 INDI_PORT = 7624
-TELESCOPE_NAME = "LX200 GPS"  # INDI driver name for OAT
+TELESCOPE_NAME = "LX200 OpenAstroTech"  # INDI driver name for OAT
 
 # Camera Settings
 # Options: "opencv" (cross-platform), "v4l2" (Linux), "picamera" (RPi), "indi"
