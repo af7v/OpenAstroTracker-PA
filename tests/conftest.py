@@ -3,7 +3,7 @@ Shared pytest fixtures for OAT Web Polar Alignment tests.
 """
 
 import os
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -121,3 +121,96 @@ def mock_serial():
     serial_mock.read_until = MagicMock(side_effect=_read_until)
 
     return serial_mock
+
+
+def _ensure_app_imported():
+    """
+    *****
+    Purpose: Import the app module safely by forcing SocketIO to use
+    the 'threading' async mode instead of 'eventlet', which is not
+    installed in the test environment.
+
+    The app module is only imported once (cached in sys.modules).
+    This helper patches flask_socketio.SocketIO.__init__ on the first
+    import so the module-level SocketIO(..., async_mode='eventlet')
+    call succeeds without eventlet being installed.
+
+    Parameters:
+    None
+
+    Returns:
+    module: the imported app module
+    *****
+    """
+    import sys
+    if "app" in sys.modules:
+        return sys.modules["app"]
+
+    import flask_socketio
+    _orig_init = flask_socketio.SocketIO.__init__
+
+    def _patched_init(self, *args, **kwargs):
+        """
+        *****
+        Purpose: Wrapper that replaces async_mode='eventlet' with
+        'threading' so tests can run without eventlet installed.
+
+        Parameters:
+        SocketIO self: the SocketIO instance being initialised
+        args: positional arguments forwarded to original __init__
+        kwargs: keyword arguments forwarded to original __init__
+
+        Returns:
+        None
+        *****
+        """
+        kwargs["async_mode"] = "threading"
+        return _orig_init(self, *args, **kwargs)
+
+    flask_socketio.SocketIO.__init__ = _patched_init
+    try:
+        import app as app_module
+    finally:
+        flask_socketio.SocketIO.__init__ = _orig_init
+
+    return app_module
+
+
+@pytest.fixture
+def client(mock_config):
+    """
+    *****
+    Purpose: Provide a Flask test client with all hardware singletons
+    reset and optional-dependency flags patched so that tests run in
+    isolation without touching real serial ports, cameras, or solvers.
+
+    Parameters:
+    pathlib.Path mock_config: the autouse mock_config fixture (ensures
+        config module constants are safe for testing)
+
+    Returns:
+    flask.testing.FlaskClient: a test client bound to the Flask app
+    *****
+    """
+    import mount_client
+    import camera_client
+    import plate_solver
+
+    # Reset singletons so each test gets a fresh instance
+    mount_client._mount_client = None
+    camera_client._camera_client = None
+    plate_solver._plate_solver = None
+
+    with patch.object(mount_client, "SERIAL_AVAILABLE", True), \
+         patch.object(camera_client, "CV2_AVAILABLE", False), \
+         patch.object(plate_solver, "ASTROPY_AVAILABLE", False):
+
+        app_module = _ensure_app_imported()
+        app_module.app.config["TESTING"] = True
+
+        yield app_module.app.test_client()
+
+    # Cleanup singletons after test
+    mount_client._mount_client = None
+    camera_client._camera_client = None
+    plate_solver._plate_solver = None
