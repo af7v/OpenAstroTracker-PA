@@ -1,16 +1,16 @@
 /* OAT Polar Alignment - Mobile-first responsive design */
 
 :root {
-    --bg-dark: #1a1a2e;
-    --bg-panel: #16213e;
-    --bg-input: #0f3460;
-    --text-primary: #eaeaea;
-    --text-secondary: #a0a0a0;
+    --bg-dark: #0d1117;
+    --bg-panel: #161b22;
+    --bg-input: #0d1117;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
     --accent: #c08000;
     --accent-green: #4ecca3;
     --accent-yellow: #ffc107;
-    --accent-blue: #0077b6;
-    --border-color: #2a2a4a;
+    --accent-blue: #58a6ff;
+    --border-color: #30363d;
 }
 
 * {
@@ -428,6 +428,13 @@ input, select {
 input:focus, select:focus {
     outline: none;
     border-color: var(--accent-blue);
+}
+
+/* Expand text/number inputs in connection + location settings rows */
+.connect-controls .setting input,
+.settings-controls .setting input {
+    flex: 1;
+    min-width: 0;
 }
 
 /* Footer */
