@@ -31,3 +31,6 @@ config_local.py
 
 # Runtime logs
 logs/
+
+# Claude Code artifacts
+docs/superpowers/
