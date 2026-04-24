@@ -78,19 +78,30 @@ sudo apt-get install -y \
 
 ASTAP is the recommended plate solver. **It must be installed separately** — a fresh install without ASTAP will fail every plate solve with no useful error message.
 
-1. Download the ARM64 or ARM32 `.deb` package from [www.hnsky.org/astap.htm](https://www.hnsky.org/astap.htm)
-2. Install the package:
+> **Note:** The ASTAP CLI is a separate download from the GUI application. Download the CLI zip, not the GUI installer.
+
+1. Go to [www.hnsky.org/astap.htm](https://www.hnsky.org/astap.htm) and download the Raspberry Pi CLI zip (look for "command-line version" → Raspberry Pi 32-bit or 64-bit depending on your OS)
+
+2. Extract and install the binary:
    ```bash
-   sudo dpkg -i astap_arm*.deb
+   unzip astap_command-line_version_Pi*.zip
+   sudo mv astap_cli /usr/local/bin/
+   sudo chmod +x /usr/local/bin/astap_cli
    ```
-3. Download a star database appropriate for your camera's field of view. The H18 database covers most wide-field setups:
-   ```bash
-   # Example: download and install H18 star database
-   sudo dpkg -i h18_*.deb
+
+3. Update `ASTAP_PATH` in your config to match:
+   ```python
+   ASTAP_PATH = "/usr/local/bin/astap_cli"
    ```
-4. Verify the CLI is available:
+
+4. Download at least one star database from the same page. **G05** and **W08** are the current recommended databases for wide-field setups:
+   - **G05** — good general-purpose database for most polar alignment fields of view
+   - **W08** — wider field coverage, useful if your camera has a very wide FOV or the mount is far off-pole
+   - **H18 is obsolete** — if you have it installed, it can be safely removed
+
+5. Verify the CLI is available:
    ```bash
-   /usr/bin/astap_cli --help
+   /usr/local/bin/astap_cli --help
    ```
 
 > **Important:** ASTAP requires at least one star database to be installed before it can solve any image. The binary alone is not sufficient.
@@ -221,7 +232,7 @@ CAMERA_DEVICE = "0"      # Device index (e.g., 0) or path (e.g., /dev/video0)
 # Plate Solver
 # -------------------------------------------------------
 SOLVER = "astap"                     # Options: "astap", "astrometry"
-ASTAP_PATH = "/usr/bin/astap_cli"    # Path to ASTAP CLI binary
+ASTAP_PATH = "/usr/local/bin/astap_cli"    # Path to ASTAP CLI binary
 
 # -------------------------------------------------------
 # Mount (overridable at runtime via the UI)
@@ -418,7 +429,7 @@ All loop state (current iteration, PA error at each step, pass/fail) is pushed t
 
 - Start with a larger target accuracy (e.g., 120 arcseconds) to confirm the loop is converging before tightening to 60 arcseconds or less
 - If the loop oscillates (error goes up and down without converging), the correction direction may need to be verified for your specific mount configuration
-- A Pi 4 with the ASTAP H18 database typically solves in 5–15 seconds per iteration; total alignment time for a mount within a few degrees of true north is usually under 5 minutes
+- A Pi 4 with ASTAP (G05 or W08 database) typically solves in 5–15 seconds per iteration; total alignment time for a mount within a few degrees of true north is usually under 5 minutes
 - **Set your latitude and longitude correctly in config** — the AZ/ALT error decomposition depends on this value; wrong coordinates produce wrong correction directions
 
 ---
@@ -489,7 +500,7 @@ Log out and back in for the group membership to take effect. If running as the s
    ```bash
    ls /usr/share/astap/
    ```
-   If this directory is empty or missing, download and install an H18 database package from the ASTAP website.
+   If this directory is empty or missing, download and install a G05 or W08 database from the ASTAP website (H18 is obsolete).
 
 ---
 
@@ -504,7 +515,7 @@ Log out and back in for the group membership to take effect. If running as the s
 | Camera not pointed near the pole | Physically aim the camera toward Polaris / the south celestial pole |
 | Exposure too short | Increase `DEFAULT_EXPOSURE` in config or use the UI field; try 5–10 seconds |
 | Gain too low | Increase `DEFAULT_GAIN`; faint stars may not be detected |
-| Wrong star database for field of view | Download a wider-field ASTAP database (e.g., H18 for most setups) |
+| Wrong star database for field of view | Download G05 or W08 from the ASTAP website (H18 is obsolete) |
 | ASTAP star database not installed | Install a star database package from the ASTAP website |
 | astrometry.net index files missing | Download appropriate index files for your field of view |
 
