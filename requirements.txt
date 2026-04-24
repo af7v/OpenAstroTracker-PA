@@ -3,7 +3,8 @@
 # Web Framework
 flask>=2.0
 flask-socketio>=5.0
-eventlet>=0.33  # For WebSocket support
+gevent>=23.0        # Async backend for Flask-SocketIO (replaces eventlet)
+gevent-websocket>=0.10  # WebSocket support for gevent
 
 # Astronomy
 astropy>=5.0

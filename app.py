@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 # Create Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'oat-pa-secret-key'
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
 
 # Global state
 alignment_running = False
